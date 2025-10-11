@@ -185,14 +185,16 @@ static void metadata_callback(const FLAC__StreamDecoder *decoder,
           ope_comments_add_string(inopt->comments,entry);
         }
         setlocale(LC_NUMERIC,saved_locale);
-
+        
+        double loudness_correction = -23-reference_loudness;
+        
         switch(inopt->copy_rgain){
           case RG_CONVERT_TO_R128:
             /*If there was a track gain, then add an equivalent R128 tag for that.*/
             if(saw_track_gain){
               char track_gain_buf[7];
               int track_gain_val;
-              gain=256*(track_gain+(-23-reference_loudness));
+              gain=256*(track_gain+loudness_correction);
               track_gain_val=gain<-32768?-32768:gain<32767?(int)floor(gain):32767;
               sprintf(track_gain_buf,"%i",track_gain_val);
               ope_comments_add(inopt->comments, "R128_TRACK_GAIN",track_gain_buf);
@@ -201,7 +203,7 @@ static void metadata_callback(const FLAC__StreamDecoder *decoder,
             if(saw_album_gain){
               char album_gain_buf[7];
               int album_gain_val;
-              gain=256*(album_gain+(-23-reference_loudness));
+              gain=256*(album_gain+loudness_correction);
               album_gain_val=gain<-32768?-32768:gain<32767?(int)floor(gain):32767;
               sprintf(album_gain_buf,"%i",album_gain_val);
               ope_comments_add(inopt->comments, "R128_ALBUM_GAIN",album_gain_buf);
@@ -210,19 +212,23 @@ static void metadata_callback(const FLAC__StreamDecoder *decoder,
           case RG_COPY_TO_OUTPUT_GAIN:
             /*Here we want the more common tag in the header.*/
             if(saw_track_gain){
-              gain=inopt->gain+(256*(track_gain+(-23-reference_loudness)));
+              gain=inopt->gain+(256*track_gain);
               inopt->gain=gain<-32768?-32768:gain<32767?(int)floor(gain):32767;
               
-              /*Blank track gain here as to not confuse any players.*/
+              /*Since it is a lot more likely for a player to try to correct
+              the R128_GAIN_* value instead of OpusHead gain, and since the
+              header gain does not have a set target like R128 does in the
+              Opus standard, we use ReplayGain directly in the header and
+              correct with R128_GAIN tags.*/
               char gain_buf[7];
-              sprintf(gain_buf,"%i",0);
+              sprintf(gain_buf,"%i",(int)floor(256*loudness_correction));
               ope_comments_add(inopt->comments, "R128_TRACK_GAIN",gain_buf);
             }
             /*Those who care can use the album gain tag.*/
             if(saw_album_gain){
               char album_gain_buf[7];
               int album_gain_val;
-              gain=256*(album_gain-track_gain);
+              gain=256*((album_gain-track_gain)+loudness_correction);
               album_gain_val=gain<-32768?-32768:gain<32767?(int)floor(gain):32767;
               sprintf(album_gain_buf,"%i",album_gain_val);
               ope_comments_add(inopt->comments, "R128_ALBUM_GAIN",album_gain_buf);
