@@ -389,6 +389,39 @@ static const char *channels_format_name(int channels_format, int channels)
   return "discrete";
 }
 
+/* this will Mega Turbo break with weird filenames.
+   fix later. */
+char *ope_gen_outfile(char *inFile)
+{
+  char *start, *end, *outfilename;
+  
+  /*static const char *file_ext[3] =
+  {
+    ".wav", ".flac", ".ogg"
+  };
+
+  for(int i = 0; i < sizeof(file_ext); i++)
+  {
+    start=inFile;
+    end=strpbrk(inFile,file_ext[i]);
+    if(end) break;
+  }
+
+  if(end == NULL)
+    end = start+strlen(inFile)+1;*/
+
+  start=inFile;
+  end=strrchr(inFile, '.');
+  end=end?end:start+strlen(inFile)+1;
+    
+  outfilename=malloc(end-start+5);
+  strncpy(outfilename,start,end-start);
+  outfilename[end-start]=0;
+  strcat(outfilename,".opus");
+  printf("Output file: %s\n", outfilename, start, end);
+  return outfilename;
+}
+
 int main(int argc, char **argv)
 {
   static const input_format raw_format =
@@ -889,12 +922,23 @@ int main(int argc, char **argv)
     fatal("Invalid bit-depth:\n"
       "--raw-bits must be 32 for float sample format\n");
   }
-  if (argc_utf8-optind!=2) {
+
+  int argcnt = argc_utf8 - optind;
+  if (argcnt < 1) {
+    usage();
+    exit(1);
+  } 
+  inFile=argv_utf8[optind]; 
+  if(argcnt > 1) {
+    outFile=argv_utf8[optind+1];
+  }
+  else if(inFile) {
+    outFile=ope_gen_outfile(inFile);
+  }
+  else {
     usage();
     exit(1);
   }
-  inFile=argv_utf8[optind];
-  outFile=argv_utf8[optind+1];
 
   if (cline_size > 0) {
     ret = ope_comments_add(inopt.comments, "ENCODER_OPTIONS", ENCODER_string);

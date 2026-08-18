@@ -211,15 +211,16 @@ static void metadata_callback(const FLAC__StreamDecoder *decoder,
             break;
           case RG_COPY_TO_OUTPUT_GAIN:
             /*Here we want the more common tag in the header.*/
-            if(saw_track_gain){
-              gain=inopt->gain+(256*track_gain);
-              inopt->gain=gain<-32768?-32768:gain<32767?(int)floor(gain):32767;
-              
-              /*Since it is a lot more likely for a player to try to correct
+            
+            /*Since it is a lot more likely for a player to try to correct
               the R128_GAIN_* value instead of OpusHead gain, and since the
               header gain does not have a set target like R128 does in the
               Opus standard, we use ReplayGain directly in the header and
-              correct with R128_GAIN tags.*/
+              adjust with R128_GAIN tags. This hack works perfectly in AIMP
+              and Auxio.*/
+            if(saw_track_gain){
+              gain=inopt->gain+(256*track_gain);
+              inopt->gain=gain<-32768?-32768:gain<32767?(int)floor(gain):32767;
               char gain_buf[7];
               sprintf(gain_buf,"%i",(int)floor(256*loudness_correction));
               ope_comments_add(inopt->comments, "R128_TRACK_GAIN",gain_buf);
