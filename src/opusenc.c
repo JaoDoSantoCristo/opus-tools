@@ -389,36 +389,20 @@ static const char *channels_format_name(int channels_format, int channels)
   return "discrete";
 }
 
-/* this will Mega Turbo break with weird filenames.
-   fix later. */
+// [jdsc] might break in edge cases, but should work well
 char *ope_gen_outfile(char *inFile)
 {
   char *start, *end, *outfilename;
-  
-  /*static const char *file_ext[3] =
-  {
-    ".wav", ".flac", ".ogg"
-  };
-
-  for(int i = 0; i < sizeof(file_ext); i++)
-  {
-    start=inFile;
-    end=strpbrk(inFile,file_ext[i]);
-    if(end) break;
-  }
-
-  if(end == NULL)
-    end = start+strlen(inFile)+1;*/
 
   start=inFile;
   end=strrchr(inFile, '.');
-  end=end?end:start+strlen(inFile)+1;
+  end=(end==NULL||end==start)?end:start+strlen(inFile)+1;
     
-  outfilename=malloc(end-start+5);
+  outfilename=malloc(end-start+6);
   strncpy(outfilename,start,end-start);
-  outfilename[end-start]=0;
+  outfilename[end-start]='\0';
   strcat(outfilename,".opus");
-  printf("Output file: %s\n", outfilename, start, end);
+  printf("Output file: %s\n", outfilename);
   return outfilename;
 }
 
