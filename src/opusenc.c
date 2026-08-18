@@ -394,9 +394,21 @@ char *ope_gen_outfile(char *inFile)
 {
   char *start, *end, *outfilename;
 
-  start=inFile;
+  start=strrchr(inFile, '/');
+
+  #if defined WIN32 || defined _WIN32 || defined __MINGW32__
+  {
+    char *backslash;
+    backslash=strrchr(inFile, '\\');
+    if(backslash!=NULL&&(start==NULL||backslash>start))
+      start=backslash;
+  }
+  #endif
+  
+  start=(start==NULL)?inFile:start+1;
+  
   end=strrchr(inFile, '.');
-  end=(end==NULL||end==start)?end:start+strlen(inFile)+1;
+  end=(end==NULL||end==start)?start+strlen(inFile):end;
     
   outfilename=malloc(end-start+6);
   strncpy(outfilename,start,end-start);
