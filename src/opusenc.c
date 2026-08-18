@@ -407,7 +407,7 @@ char *ope_gen_outfile(char *inFile)
   
   start=(start==NULL)?inFile:start+1;
   
-  end=strrchr(inFile, '.');
+  end=strrchr(start, '.');
   end=(end==NULL||end==start)?start+strlen(inFile):end;
     
   outfilename=malloc(end-start+6);
